@@ -23,72 +23,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [10.x, 12.x, 13.x]
+        node-version: [18.x, 20.x, 22.x, 24.x]
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Checkout the repository
-      - uses: actions/checkout@v2
-        # Installs the specific version of Node.js
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node-version }}
-
-      ################################################################################
-      # Install Dependencies
-      #
-      #   ASSUMPTIONS:
-      #     - The project has a package-lock.json file
-      #
-      #   Simply run the tests for the project.
-      ################################################################################
-      - name: Install dependencies
-        run: npm ci
-
-      ################################################################################
-      # Run Testing
-      #
-      #   ASSUMPTIONS:
-      #     - The project has `tap` as a devDependency
-      #     - There is a script called "test" in the package.json
-      #
-      #   Simply run the tests for the project.
-      ################################################################################
-      - name: Run tests
-        run: npm test
-
-      ################################################################################
-      # Run coverage check
-      #
-      #   ASSUMPTIONS:
-      #     - The project has `tap` as a devDependency
-      #     - There is a script called "coverage" in the package.json
-      #
-      #   Coverage should only be posted once, we are choosing the latest LTS of
-      #   node, and ubuntu as the matrix point to post coverage from. We limit
-      #   to the 'push' event so that coverage ins't posted twice from the
-      #   pull-request event, and push event (line 3).
-      ################################################################################
-      - name: Run coverage report
-        if: github.event_name == 'push' && matrix.node-version == '12.x' && matrix.os == 'ubuntu-latest'
-        run: npm run coverage
-        env:
-          # The environment variable name is leveraged by `tap`
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-
-      ################################################################################
-      # Run linting
-      #
-      #   ASSUMPTIONS:
-      #     - There is a script called "lint" in the package.json
-      #
-      #   We run linting AFTER we run testing and coverage checks, because if a step
-      #   fails in an GitHub Action, all other steps are not run. We don't want to
-      #   fail to run tests or coverage because of linting. It should be the lowest
-      #   priority of all the steps.
-      ################################################################################
-      - name: Run linter
+      - name: Install & Build
+        uses: bahmutov/npm-install@6bbff949458c1dd99b20e185cee8c4d6fcf1212a # v1.10.9
+        with:
+          install-command: npm ci --foreground-scripts
+      - name: Lint
         run: npm run lint
+      - name: Test
+        run: npm run test

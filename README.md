@@ -1,133 +1,183 @@
-[![npm](https://img.shields.io/npm/v/npm-merge-driver.svg)](https://npm.im/npm-merge-driver) [![license](https://img.shields.io/npm/l/npm-merge-driver.svg)](https://npm.im/npm-merge-driver) [![Travis](https://img.shields.io/travis/npm/npm-merge-driver.svg)](https://travis-ci.org/npm/npm-merge-driver) [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/npm/npm-merge-driver?svg=true)](https://ci.appveyor.com/project/npm/npm-merge-driver) [![Coverage Status](https://coveralls.io/repos/github/npm/npm-merge-driver/badge.svg?branch=latest)](https://coveralls.io/github/npm/npm-merge-driver?branch=latest)
+# 🔐 package-lock-merge-driver
 
-# npm-merge-driver(1) -- git merge driver for automatic merging of lockfiles
+> Git merge driver for `package-lock.json` v2+
 
-### Automatic Setup (recommended):
+This is a fork of the original (unmaintained) [`npm-merge-driver`](https://github.com/npm/npm-merge-driver) project.
+
+## What is this?
+
+This package provides a CLI to install (and uninstall) a [merge driver](https://git-scm.com/docs/gitattributes#_defining_a_custom_merge_driver) which attempts to automatically resolve merge conflicts in `package-lock.json` files.
+
+## Do I need it?
+
+Do you get merge conflicts in your `package-lock.json` files? Like _all the damn time?_ Then yeah.
+
+## Differences from `npm-merge-driver`
+
+> TL;DR: _This is a whole-ass package_.
+
+- Supports for npm workspaces (monorepos)
+- Sacrifices speed for reliability
+- Validates the result via `npm ls` to check for broken dependencies (if this fails, automatic resolution fails)
+- Default behavior is to **install merge drivers globally** (you can still install locally if you want)
+- Requires Node.js v18.13.0+
+- Requires `npm` v7.0.0+
+- Removed `--no-legacy` flag because what is even that
+- Supports Git [includes](https://git-scm.com/docs/git-config#_includes) when discovering and writing to Git configuration files
+- Will cleanup empty `gitattributes` files it created
+- Tested against an _actual Git repository_
+- Unrecognizable compared to original; don't bother
+
+In addition, the following items are _current_ differences, but they _might_ instead become _non-differences_ in a hypothetical future:
+
+- **Use with Yarn or pnpm lockfiles is unsupported**
+- No support for `npm-shrinkwrap.json`, but you probably don't care about that
+
+> I suppose if (big _if_) I do end up supporting Yarn or pnpm then I might need to rename the package. I'll think of a better name.
+
+### Motivation
+
+I needed [npm-merge-driver](https://github.com/npm/npm-merge-driver) to work. But it doesn't, and there's no way forward to fix it. So against my better judgement, here we are.
+
+## Automatic Setup (recommended)
 
 To start using it right away:
 
-```
-$ npx npm-merge-driver install --global
-```
-
-**Or** install it locally, per-project:
-```
-$ cd /path/to/git/repository
-$ npx npm-merge-driver install
+```sh
+npx package-lock-merge-driver install
 ```
 
-...And you're good to go!
+The next time _any_ `package-lock.json` has a conflict, a merge driver will attempt to automatically fix it. Unless it fails, you don't need to do anything else. You _will_ still need to resolve conflicts in `package.json` files yourself, though!
 
-Next time your lockfile has a conflict, it will be automatically fixed. You
-don't need to do anything else.
+### Example Scenario
 
-### Example
+After installation, you create a feature branch and make some dependency changes. Now you want to rebase onto `main`:
 
+```sh
+git rebase main
 ```
-$ npx npm-merge-driver install
-$ git merge my-conflicting-branch
-npm WARN conflict A git conflict was detected in package-lock.json. Attempting to auto-resolve.
 
-added 1 package in 0.077s
+Eek, there's a conflict! But don't panic! You should see something like thiss:
+
+```plain
+🔐 package-lock-merge-driver v2.3.6
+
+Moved to trash: /my-repo/node_modules
+package-lock-merge-driver: Successfully resolved conflicts in package-lock.json
 Auto-merging package-lock.json
-Merge made by the 'recursive' strategy.
- package-lock.json | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-$ git status
-<clean>
 ```
 
-### Advanced
+Did conflicts in `package-lock.json` remain?
+
+```sh
+git status
+```
+
+```plain
+M   package-lock.json
+```
+
+No. No conflicts in `package-lock.json` remain.
+
+## How it Works
+
+1. Barely.
+2. _Trash_ (read: _move to the OS' trash/recycle bin/shitcan_) `node_modules` and _any other_ `node_modules` folders found in workspaces, then re-run `npm install`.
+3. Validate result by running `npm ls`.
+
+Here's the rationale:
+
+- Running a full `npm install` every time is slow enough without a `rm -rf node_modules packages/*/node_modules` first (though I could make this configurable, I suppose), we just move them away. Your OS will take care of it. Trust me.
+- This has the advantage of mitigating churn in `package-lock.json` due to how `npm` modifies `package-lock.json` when a `node_modules` is present. I'm pretty sure this is just a bug in `npm`.
+- `npm ci` is not possible, of course, because it only works if the lockfile is valid _and_ synced with all `package.json` manifests.
+- The original `npm-merge-driver` would retry the first step by attempting to use "their" `package-lock.json`, but this was folly, since it'd still _always_ require manual intervention.
+- Workspaces are _not_ assumed to be in `packages/*`. Best effort here, since `package.json` may be in conflict when we try to parse it.
+
+## Advanced Setup
 
 The following section is only for advanced configuration of the driver if you
 have specific needs.
 
-#### Setup Options
+For additional help (maybe), try `npx package-lock-merge-driver --help`.
 
-`npm-merge-driver install` supports a couple of config options:
+### Installation Options
 
-`--driver` - string to install as the driver in the git configuration
+The `install` command supports a couple of config options:
 
-`--driver-name` - string to use as the merge driver name in your configuration
+- `--command` - This is the command used for the actual merge operation. You probably don't want to fiddle with this.
 
-`--files` - list of files that will trigger this driver
+- `--name` - String to use as the internal driver name in your configuration. Also probably don't want to fiddle with this.
 
-`--no-legacy` - disables retrying legacy commands on error
+- `--local` - Install the driver in the local repository only. By default, the driver is installed globally.
 
-#### Merge Options
+### Merge Options
 
-`npm-merge-driver merge` can also be configured:
-
-`-c, --command` - command to execute when a lockfile is conflicted
-
-`--no-legacy` - disables retrying legacy commands on error
+There are no options for the `merge` command; it just takes positional arguments given to it by Git.
 
 #### Install as Dependency
 
 To avoid regular `npx` installs, consider installing the driver:
 
-`$ npm install [-g|--save-dev] npm-merge-driver`
-
-#### Manual Setup (advanced):
-
-`npm-merge-driver` requires two git configurations to work: a git configuration
-to add the driver to git, which is by default your local `.git/config` file, and
-a `gitattributes(5)` configuration, which is by default your local
-`.git/info/attributes`.
-
-If you **do not** want `npm-merge-driver` to install itself for you:
-
-Add the driver to `.git/config`:
+```sh
+npm install [-g|-D] package-lock-merge-driver
 ```
-$ git config merge."npm-merge-driver".name \
+
+#### Manual Setup (advanced)
+
+`package-lock-merge-driver`'s automated installation uses the following config:
+
+1. A merge driver in the main Git configuration, including
+   - `name` (description [really]),
+   - `driver` (the actual command)
+   - `gitAttributesPath` (path to the `gitattributes` file we will write to; this is only necessary for clean uninstallation and you can ignore it if installing manually)
+2. A `gitattributes(5)` configuration referencing `package-lock.json` and the merge driver configured in 1.
+
+If you **do not** want `package-lock-merge-driver` to install itself for you (I guess I wouldn't blame you), here's an example of a manual global installation:
+
+Add the driver to `~/.gitconfig`:
+
+```sh
+git config --global merge.package-lock-merge-driver.name \
     "Automatically merge npm lockfiles"
-$ git config merge."npm-merge-driver".driver \
-    "npx npm-merge-driver merge %A %O %B %P"
+git config --global merge.package-lock-merge-driver.driver \
+    "npx package-lock-merge-driver merge %A %O %B %P"
 ```
 
-Add the relevant attributes to `.gitattributes` or `.git/info/attributes`:
-```
-package-lock.json merge=npm-merge-driver
-npm-shrinkwrap.json merge=npm-merge-driver
-```
+Add the relevant attributes to `~/.gitattributes` (creating if necessary):
 
-#### Using with other package managers
-
-`npm-merge-driver` can be used with package managers other than npm! It's a bit
-more verbose, but works just as well, assuming the package manager has a command
-that can automatically resolve merge conflicts in its lockfile:
-
-```
-$ npx npm-merge-driver install \
-    --driver-name yarn-merge-driver \
-    --driver "npx npm-merge-driver merge %A %O %B %P -c yarn" \
-    --files yarn.lock
+```gitattributes
+package-lock.json merge=package-lock-merge-driver
 ```
 
-...and now, any time `yarn.lock` has a conflict, it will be automatically
-resolved without you having to manually run `yarn`.
+> [!IMPORTANT]
+>
+> - In case you missed it above, lockfiles from any package manager other than `npm` are unsupported.
+> - `npm-shrinkwrap.json` is unsupported.
 
-#### Uninstalling
+## Uninstalling
 
-To remove an installed merge driver, use `npm-merge-driver uninstall`:
+This only applies if you used automatic installation. If you didn't, then figure it out yourself.
 
+To remove an installed merge driver, use `package-lock-merge-driver uninstall`:
+
+```sh
+npx package-lock-merge-driver uninstall [--global] [--name=package-lock-merge-driver]
 ```
-$ npx npm-merge-driver uninstall [--global] [--driver-name=npm-merge-driver]
-```
 
-## AUTHOR
+This will remove the driver from whatever Git configuration it put it in originally, and then remove it from the `gitattributes` file it used. If it created the `gitattributes` file and it is empty after removing the entry, `package-lock-merge-driver` will delete the file because it's a sweetheart.
 
-Written by [Kat Marchan](https://github.com/zkat)
+## A Final Plea
 
-## REPORTING BUGS
+If you know of some way to sort out the conflicts _without_ a full `npm install`, [please file an issue](https://github.com/boneskull/package-lock-merge-driver/issues/new). Please. 🥹
 
-Please file any relevant issues [on Github.](https://github.com/npm/npm-merge-driver)
+## Authors
 
-## LICENSE
+- Current maintainer: [Christopher Hiller](https://github.com/boneskull)
+- Original author: Kat Marchán
+
+## License
+
+- Copyright © 2025 Christopher Hiller
+- Copyright © 2017 Microsoft Corporation (prev npm, Inc.)
 
 This work is released under the terms of the ISC license. See `LICENSE.md` for details.
-
-## SEE ALSO
-
-* `git-config(1)`
-* `gitattributes(5)`
