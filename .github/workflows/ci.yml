@@ -49,3 +49,4 @@ jobs:
         run: npm test
         env:
           DEBUG: 'package-lock-merge-driver*'
+          FORCE_COLOR: '1'

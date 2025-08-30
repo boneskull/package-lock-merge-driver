@@ -4,6 +4,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import util from 'node:util';
 
+import { isErrnoException } from '../src/lib.js';
+
 const exec = util.promisify(childProcess.exec);
 
 const dirname = import.meta.dirname;
@@ -26,7 +28,9 @@ export const cleanupFixture = async (repoPath = REPO_PATH): Promise<void> => {
     await fs.rm(repoPath, { force: true, recursive: true });
     debug('Removed test fixture at %s', repoPath);
   } catch (err) {
-    debug(err);
+    if (isErrnoException(err) && err.code !== 'ENOENT') {
+      debug(err);
+    }
   }
 };
 
@@ -40,12 +44,11 @@ export const installMergeDriver = async (
   repoPath = REPO_PATH,
   distPath = DIST_PATH,
 ): Promise<void> => {
-  await exec(
-    `"${process.execPath}" "${distPath}" install --local --command "node ${DIST_PATH} merge %A %O %B %P"`,
-    {
-      cwd: repoPath,
-    },
-  );
+  const command = `"${process.execPath}" "${distPath}" install --local --command "node ${DIST_PATH} merge %A %O %B %P"`;
+  debug('Executing command', command);
+  await exec(command, {
+    cwd: repoPath,
+  });
 };
 
 export const execGitWithIO = async (

@@ -26,7 +26,9 @@ const isError = (value: unknown): value is Error & Record<string, any> => {
  * @param value - The value to check
  * @returns True if the value is an error with a code property
  */
-const isErrnoException = (value: unknown): value is NodeJS.ErrnoException => {
+export const isErrnoException = (
+  value: unknown,
+): value is NodeJS.ErrnoException => {
   return isError(value) && 'code' in value && typeof value.code === 'string';
 };
 
