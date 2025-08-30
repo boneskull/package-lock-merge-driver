@@ -1,24 +1,45 @@
 {
-  "name": "npm-merge-driver",
+  "name": "package-lock-merge-driver",
   "version": "2.3.6",
-  "description": "git merge driver for automatically merging lockfiles",
-  "bin": "index.js",
-  "main": "index.js",
-  "files": [
-    "*.js",
-    "npm-merge-driver.1"
-  ],
-  "man": "./npm-merge-driver.1",
-  "scripts": {
-    "precommit": "lint-staged",
-    "docs": "tail -n +2 README.md | marked-man --manual 'User Commands' --version \"$npm_package_name@$npm_package_version\" > npm-merge-driver.1",
-    "prerelease": "npm t",
-    "postrelease": "npm publish && git push --follow-tags",
-    "pretest": "standard",
-    "release": "standard-version -s",
-    "test": "tap -J --coverage test/*.js"
+  "type": "module",
+  "description": "Git merge driver for package-lock.json",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boneskull/package-lock-merge-driver.git"
   },
-  "repository": "https://github.com/npm/npm-merge-driver",
+  "author": {
+    "name": "Christopher Hiller",
+    "email": "boneskull@boneskull.com"
+  },
+  "license": "ISC",
+  "engines": {
+    "node": "^20.11.0 || ^22.0.0 || ^24.0.0",
+    "npm": ">=7"
+  },
+  "bin": {
+    "package-lock-merge-driver": "dist/cli.js"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/lib.d.ts",
+        "default": "./dist/lib.js"
+      }
+    },
+    "./cli.js": {
+      "import": {
+        "types": "./dist/cli.d.ts",
+        "default": "./dist/cli.js"
+      }
+    }
+  },
+  "files": [
+    "CHANGELOG.md",
+    "dist",
+    "package-lock-merge-driver.1",
+    "src"
+  ],
   "keywords": [
     "npm",
     "lockfiles",
@@ -35,42 +56,96 @@
     "automerge",
     "autoresolve"
   ],
-  "author": {
-    "name": "Kat Marchán",
-    "email": "kzm@sykosomatic.org",
-    "twitter": "maybekatz"
+  "scripts": {
+    "build": "tsup",
+    "build:docs": "tail -n +2 README.md | marked-man --manual 'User Commands' --version \"$npm_package_name@$npm_package_version\" > package-lock-merge-driver.1",
+    "dev": "npm run build -- --watch",
+    "lint": "eslint .",
+    "lint:commit": "commitlint",
+    "lint:fix": "eslint . --fix; npm pkg fix",
+    "lint:staged": "lint-staged",
+    "lint:types": "tsc -b ./.config/tsconfig.eslint.json",
+    "lint:types:dev": "npm run lint:types -- --watch",
+    "prepare": "husky; npm run build",
+    "pretest": "npm run build",
+    "test": "node --import tsx --test test/index.test.ts",
+    "test:fixture:cleanup": "node script/cleanup-fixture.js",
+    "test:fixture:setup": "node script/setup-fixture.js",
+    "test:fixture:update": "node script/update-bundle.js test/fixture/repo-1.bundle test/fixture/repo-1",
+    "test:watch": "npm run test -- --watch"
   },
-  "license": "ISC",
   "dependencies": {
-    "mkdirp": "^0.5.1",
-    "yargs": "^10.0.3"
+    "debug": "^4.4.1",
+    "slug": "^11.0.0",
+    "trash": "^9.0.0",
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "husky": "^0.14.3",
-    "lint-staged": "^6.0.0",
-    "marked-man": "^0.2.1",
-    "nyc": "^11.3.0",
-    "prettier-standard": "^7.0.3",
-    "standard": "^10.0.3",
-    "standard-version": "^4.1.0",
-    "tap": "^11.0.0"
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
+    "@microsoft/api-extractor": "7.52.11",
+    "@stylistic/eslint-plugin": "5.2.3",
+    "@types/debug": "4.1.12",
+    "@types/node": "24.3.0",
+    "@types/slug": "5.0.9",
+    "@types/yargs": "17.0.33",
+    "eslint": "9.34.0",
+    "eslint-plugin-jsonc": "2.20.1",
+    "eslint-plugin-perfectionist": "4.15.0",
+    "globals": "15.13.0",
+    "husky": "9.1.7",
+    "knip": "5.63.0",
+    "lint-staged": "16.1.5",
+    "marked-man": "2.1.0",
+    "prettier": "3.6.2",
+    "prettier-plugin-jsdoc": "1.3.3",
+    "prettier-plugin-pkg": "0.21.2",
+    "tsup": "8.5.0",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.41.0"
   },
-  "config": {
-    "nyc": {
-      "exclude": [
-        "node_modules/**",
-        "test/**"
+  "bundleDependencies": [
+    "yargs",
+    "slug",
+    "trash"
+  ],
+  "knip": {
+    "ignoreDependencies": [
+      "@types/wallabyjs",
+      "serve"
+    ],
+    "ignore": [
+      ".wallaby.js",
+      "**/*.cts",
+      "**/*.d.ts"
+    ],
+    "tags": [
+      "-knipignore"
+    ],
+    "node": {
+      "entry": [
+        "test/**/*.test.ts"
       ]
     }
   },
   "lint-staged": {
-    "*.js": [
-      "prettier-standard",
-      "git add"
+    "*.{ts,cts,js,json,md,yml,json5}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "package.json": [
+      "npm pkg fix"
     ]
   },
-  "bundleDependencies": [
-    "yargs",
-    "mkdirp"
-  ]
+  "prettier": {
+    "jsdocCommentLineStrategy": "keep",
+    "jsdocPreferCodeFences": true,
+    "plugins": [
+      "prettier-plugin-jsdoc",
+      "prettier-plugin-pkg"
+    ],
+    "singleQuote": true,
+    "tsdoc": true
+  }
 }
