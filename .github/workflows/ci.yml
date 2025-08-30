@@ -41,5 +41,9 @@ jobs:
           install-command: npm ci --foreground-scripts
       - name: Lint
         run: npm run lint
+      - name: Configure Git User
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
       - name: Test
         run: npm run test
