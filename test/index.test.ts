@@ -76,7 +76,7 @@ describe('package-lock-merge-driver', () => {
     ).stdout.trim();
 
     assert.ok(
-      mergeDriverConfig.includes(`dist${path.sep}cli.js`) &&
+      mergeDriverConfig.includes(`dist/cli.js`) &&
         mergeDriverConfig.includes('merge'),
       'Merge driver should be configured to use the local CLI build',
     );
