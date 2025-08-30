@@ -44,7 +44,9 @@ export const installMergeDriver = async (
   repoPath = REPO_PATH,
   distPath = DIST_PATH,
 ): Promise<void> => {
-  const command = `"${process.execPath}" "${distPath}" install --local --command "node ${DIST_PATH} merge %A %O %B %P"`;
+  // Convert backslashes to forward slashes for Windows compatibility
+  const normalizedDistPath = distPath.replace(/\\/g, '/');
+  const command = `"${process.execPath}" "${distPath}" install --local --command "node ${normalizedDistPath} merge %A %O %B %P"`;
   debug('Executing command', command);
   await exec(command, {
     cwd: repoPath,
