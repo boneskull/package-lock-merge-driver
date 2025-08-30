@@ -134,6 +134,16 @@ npx package-lock-merge-driver install --verbose
 
 This is tedious.
 
+### Installation
+
+`package-lock-merge-driver` is _explicitly designed to be installed globally_. It bundles its own dependencies. You _can_ install this into a local project, but I wouldn't recommend doing so.
+
+```sh
+npm install -g package-lock-merge-driver
+```
+
+### Configuration Details
+
 `package-lock-merge-driver`'s automated installation uses the following config:
 
 1. A merge driver in the main Git configuration, including
