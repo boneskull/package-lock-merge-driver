@@ -39,6 +39,11 @@ In addition, the following items are _current_ differences, but they _might_ ins
 
 I needed [npm-merge-driver](https://github.com/npm/npm-merge-driver) to work. But it doesn't, and there's no way forward to fix it. So against my better judgement, here we are.
 
+## Requirements
+
+- Node.js v20.11.0+
+- npm v7.0.0+
+
 ## Automatic Setup (Recommended)
 
 To start using it right away:

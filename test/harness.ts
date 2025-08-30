@@ -2,15 +2,11 @@ import Debug from 'debug';
 import childProcess from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import util from 'node:util';
 
 const exec = util.promisify(childProcess.exec);
 
-const dirname =
-  'dirname' in import.meta
-    ? import.meta.dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+const dirname = import.meta.dirname;
 
 const FIXTURE_PATH = path.join(dirname, 'fixture');
 export const BUNDLE_PATH = path.join(FIXTURE_PATH, 'repo-1.bundle');
@@ -50,27 +46,18 @@ export const installMergeDriver = async (
       cwd: repoPath,
     },
   );
-
-  // // Create the git attributes file
-  // const gitInfoDir = path.join(repoPath, '.git', 'info');
-  // const gitAttributesPath = path.join(gitInfoDir, 'attributes');
-  // await fs.mkdir(gitInfoDir, { recursive: true });
-  // await fs.writeFile(
-  //   gitAttributesPath,
-  //   'package-lock.json merge=package-lock-merge-driver\n',
-  // );
 };
 
 export const execGitWithIO = async (
   args: string[] = [],
-  options: childProcess.ExecOptions = {},
+  options: childProcess.ExecOptionsWithStringEncoding = {},
 ) => {
   const command = `${GIT} ${args.join(' ')}`;
   debug('Executing command', command);
-  const promise = exec(command, {
+  const promise = exec(command, <childProcess.ExecOptionsWithStringEncoding>{
     cwd: REPO_PATH,
     ...options,
-    encoding: 'utf-8',
+    encoding: 'utf8',
   });
   promise.child.stdout?.pipe(process.stdout);
   promise.child.stderr?.pipe(process.stderr);
@@ -79,14 +66,14 @@ export const execGitWithIO = async (
 
 export const execGit = async (
   args: string[] = [],
-  options: childProcess.ExecOptions = {},
+  options: childProcess.ExecOptionsWithStringEncoding = {},
 ) => {
   const command = `${GIT} ${args.join(' ')}`;
   debug('Executing command', command);
-  return exec(command, {
+  return exec(command, <childProcess.ExecOptionsWithStringEncoding>{
     cwd: REPO_PATH,
     ...options,
-    encoding: 'utf-8',
+    encoding: 'utf8',
   });
 };
 

@@ -139,7 +139,7 @@ describe('package-lock-merge-driver', () => {
     // Verify git status shows package.json still has conflicts (expected)
     // but package-lock.json should be resolved
     const gitStatus = (
-      await execGit(['status', '--porcelain'], {
+      await execGitWithIO(['status', '--porcelain'], {
         cwd: REPO_PATH,
       })
     ).stdout.trim();
