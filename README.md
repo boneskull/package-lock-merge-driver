@@ -20,7 +20,7 @@ Do you get merge conflicts in your `package-lock.json` files? Like _all the damn
 - Sacrifices speed for reliability
 - Validates the result via `npm ls` to check for broken dependencies (if this fails, automatic resolution fails)
 - Default behavior is to **install merge drivers globally** (you can still install locally if you want)
-- Requires Node.js v18.13.0+
+- Requires Node.js v20.0.0+
 - Requires `npm` v7.0.0+
 - Removed `--no-legacy` flag because what is even that
 - Supports Git [includes](https://git-scm.com/docs/git-config#_includes) when discovering and writing to Git configuration files
@@ -39,7 +39,7 @@ In addition, the following items are _current_ differences, but they _might_ ins
 
 I needed [npm-merge-driver](https://github.com/npm/npm-merge-driver) to work. But it doesn't, and there's no way forward to fix it. So against my better judgement, here we are.
 
-## Automatic Setup (recommended)
+## Automatic Setup (Recommended)
 
 To start using it right away:
 
@@ -48,6 +48,16 @@ npx package-lock-merge-driver install
 ```
 
 The next time _any_ `package-lock.json` has a conflict, a merge driver will attempt to automatically fix it. Unless it fails, you don't need to do anything else. You _will_ still need to resolve conflicts in `package.json` files yourself, though!
+
+> [!TIP]
+>
+> Once you've tried it a couple times and felt its powerful magic, it's recommended to install `package-lock-merge-driver` globally to avoid some `npx`-related overhead:
+>
+> ```sh
+> npm install -g package-lock-merge-driver
+> ```
+>
+> BONUS! If you install globally and are on a POSIX OS, you _should_ be able to run `man package-lock-merge-driver` to see the _man page_! Which is just this `README.md`; sorry.
 
 ### Example Scenario
 
@@ -79,50 +89,45 @@ M   package-lock.json
 
 No. No conflicts in `package-lock.json` remain.
 
-## How it Works
+## Uninstallation
 
-1. Barely.
-2. _Trash_ (read: _move to the OS' trash/recycle bin/shitcan_) `node_modules` and _any other_ `node_modules` folders found in workspaces, then re-run `npm install`.
-3. Validate result by running `npm ls`.
+This only applies if you used the method detailed in [Automatic Setup](#automatic-setup-recommended). If you didn't, then figure it out yourself.
 
-Here's the rationale:
+To remove an installed merge driver, use `package-lock-merge-driver uninstall`:
 
-- Running a full `npm install` every time is slow enough without a `rm -rf node_modules packages/*/node_modules` first (though I could make this configurable, I suppose), we just move them away. Your OS will take care of it. Trust me.
-- This has the advantage of mitigating churn in `package-lock.json` due to how `npm` modifies `package-lock.json` when a `node_modules` is present. I'm pretty sure this is just a bug in `npm`.
-- `npm ci` is not possible, of course, because it only works if the lockfile is valid _and_ synced with all `package.json` manifests.
-- The original `npm-merge-driver` would retry the first step by attempting to use "their" `package-lock.json`, but this was folly, since it'd still _always_ require manual intervention.
-- Workspaces are _not_ assumed to be in `packages/*`. Best effort here, since `package.json` may be in conflict when we try to parse it.
+```sh
+npx package-lock-merge-driver uninstall [--global] [--name=package-lock-merge-driver]
+```
 
-## Advanced Setup
+This will remove the driver from whatever Git configuration it put it in originally, and then remove it from the `gitattributes` file it used. If it created the `gitattributes` file and it is empty after removing the entry, `package-lock-merge-driver` will delete the file because it's a sweetheart.
 
-The following section is only for advanced configuration of the driver if you
-have specific needs.
+## Advanced Automated Setup
 
-For additional help (maybe), try `npx package-lock-merge-driver --help`.
-
-### Installation Options
-
-The `install` command supports a couple of config options:
+The `install` command does the actual configuration ("installation") of the merge driver. It supports a couple of config options:
 
 - `--command` - This is the command used for the actual merge operation. You probably don't want to fiddle with this.
 
-- `--name` - String to use as the internal driver name in your configuration. Also probably don't want to fiddle with this.
+- `--name` - String to use as the internal driver name in your configuration. I don't know why this option is even here, but it is.
 
 - `--local` - Install the driver in the local repository only. By default, the driver is installed globally.
 
-### Merge Options
-
-There are no options for the `merge` command; it just takes positional arguments given to it by Git.
-
-#### Install as Dependency
-
-To avoid regular `npx` installs, consider installing the driver:
+For example, to install the driver locally in the current working directory using a custom name:
 
 ```sh
-npm install [-g|-D] package-lock-merge-driver
+npx package-lock-merge-driver install --local --name=butts
 ```
 
-#### Manual Setup (advanced)
+### Verbose Logging
+
+Run any command with `--verbose` to get more output. For example:
+
+```sh
+npx package-lock-merge-driver install --verbose
+```
+
+## Manual Setup
+
+This is tedious.
 
 `package-lock-merge-driver`'s automated installation uses the following config:
 
@@ -139,6 +144,7 @@ Add the driver to `~/.gitconfig`:
 ```sh
 git config --global merge.package-lock-merge-driver.name \
     "Automatically merge npm lockfiles"
+# this is the most important part!
 git config --global merge.package-lock-merge-driver.driver \
     "npx package-lock-merge-driver merge %A %O %B %P"
 ```
@@ -149,22 +155,25 @@ Add the relevant attributes to `~/.gitattributes` (creating if necessary):
 package-lock.json merge=package-lock-merge-driver
 ```
 
-> [!IMPORTANT]
+The RHS of the `merge` attribute above _must_ match `<name>` in `merge.<name>.driver`.
+
+## How it Works
+
+1. Barely.
+2. _Trash_ (read: _move to the OS' trash/recycle bin/shitcan_) `node_modules` and _any other_ `node_modules` folders found in workspaces, then re-run `npm install`.
+3. Validate result by running `npm ls`.
+
+> [!NOTE]
 >
-> - In case you missed it above, lockfiles from any package manager other than `npm` are unsupported.
-> - `npm-shrinkwrap.json` is unsupported.
+> Workspaces (monorepo) support is best-effort, since `package.json` may be in conflict when we try to parse it. This will typically only affect the resulting lockfile if the actual [`workspaces` field](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#workspaces) is in conflict.
 
-## Uninstalling
+### And Why It Works That Way
 
-This only applies if you used automatic installation. If you didn't, then figure it out yourself.
-
-To remove an installed merge driver, use `package-lock-merge-driver uninstall`:
-
-```sh
-npx package-lock-merge-driver uninstall [--global] [--name=package-lock-merge-driver]
-```
-
-This will remove the driver from whatever Git configuration it put it in originally, and then remove it from the `gitattributes` file it used. If it created the `gitattributes` file and it is empty after removing the entry, `package-lock-merge-driver` will delete the file because it's a sweetheart.
+- `npm install --package-lock-only` will not avail you as of npm v7.0.0. So that's out.
+- Running a full `npm install` every time is slow enough without a `rm -rf node_modules packages/*/node_modules` first (though I could make this configurable, I suppose), we just move them away. Your OS will take care of it. Trust me.
+  This has the advantage of mitigating churn in `package-lock.json` due to how `npm` modifies `package-lock.json` when a `node_modules` is present. If you ever see random extra fields being added and removed to `package-lock.json`, you know what I mean. I'm pretty sure this is just a bug in `npm`.
+- `npm ci` is not possible, of course, because it only works if the lockfile is valid _and_ synced with all `package.json` manifests.
+- Just accepting "their" `package-lock.json` doesn't help, as it will _always_ require a manual `npm install` thereafter.
 
 ## A Final Plea
 
@@ -178,6 +187,6 @@ If you know of some way to sort out the conflicts _without_ a full `npm install`
 ## License
 
 - Copyright © 2025 Christopher Hiller
-- Copyright © 2017 Microsoft Corporation (prev npm, Inc.)
+- Copyright © 2017 Microsoft Corporation (a.k.a. npm, Inc. a.k.a. GitHub)
 
 This work is released under the terms of the ISC license. See `LICENSE.md` for details.
