@@ -46,4 +46,4 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
       - name: Test
-        run: npm run test
+        run: npm test

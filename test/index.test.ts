@@ -76,7 +76,7 @@ describe('package-lock-merge-driver', () => {
     ).stdout.trim();
 
     assert.ok(
-      mergeDriverConfig.includes('dist/cli.js') &&
+      mergeDriverConfig.includes(`dist${path.sep}cli.js`) &&
         mergeDriverConfig.includes('merge'),
       'Merge driver should be configured to use the local CLI build',
     );
@@ -146,11 +146,11 @@ describe('package-lock-merge-driver', () => {
 
     // Should have package.json as unmerged (UU) but package-lock.json as modified (M)
     assert.ok(
-      gitStatus.includes('UU package.json'),
+      /UU\s+package.json/.test(gitStatus),
       'package.json should still have unresolved conflicts',
     );
     assert.ok(
-      gitStatus.includes('M package-lock.json'),
+      /M\s+package-lock.json/.test(gitStatus),
       'package-lock.json should be resolved and modified',
     );
 

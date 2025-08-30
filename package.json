@@ -67,6 +67,7 @@
     "lint:types": "tsc -b ./.config/tsconfig.eslint.json",
     "lint:types:dev": "npm run lint:types -- --watch",
     "prepare": "husky; npm run build",
+    "pretest": "npm run build",
     "test": "node --import tsx --test test/index.test.ts",
     "test:fixture:cleanup": "node script/cleanup-fixture.js",
     "test:fixture:setup": "node script/setup-fixture.js",
