@@ -84,7 +84,7 @@
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@microsoft/api-extractor": "7.52.11",
-    "@stylistic/eslint-plugin": "5.2.3",
+    "@stylistic/eslint-plugin": "5.3.1",
     "@types/debug": "4.1.12",
     "@types/node": "24.3.0",
     "@types/slug": "5.0.9",
@@ -103,7 +103,7 @@
     "tsup": "8.5.0",
     "tsx": "4.20.5",
     "typescript": "5.9.2",
-    "typescript-eslint": "8.41.0"
+    "typescript-eslint": "8.42.0"
   },
   "bundleDependencies": [
     "yargs",
