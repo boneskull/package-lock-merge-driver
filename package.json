@@ -75,7 +75,7 @@
     "test:watch": "npm run test -- --watch"
   },
   "dependencies": {
-    "debug": "4.4.1",
+    "debug": "4.4.3",
     "slug": "11.0.0",
     "trash": "9.0.0",
     "yargs": "18.0.0"
