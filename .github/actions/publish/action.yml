@@ -15,7 +15,7 @@ runs:
     - name: Setup Node.js
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
-        node-version: 24.8.0
+        node-version: 24.9.0
         registry-url: https://registry.npmjs.org
     - name: Install & Build
       uses: bahmutov/npm-install@e5fe105da2400070b5345aeb71fcb1ef5d4b2d1f # v1.11.0
