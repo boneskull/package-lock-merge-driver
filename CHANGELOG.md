@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/boneskull/package-lock-merge-driver/compare/package-lock-merge-driver-v0.0.1...package-lock-merge-driver-v0.0.2) (2025-09-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency debug to v4.4.3 ([#30](https://github.com/boneskull/package-lock-merge-driver/issues/30)) ([d998a63](https://github.com/boneskull/package-lock-merge-driver/commit/d998a63efbb733456e852459a158c59ad7f77cd4))
+
 ## 0.0.1 (2025-08-30)
 
 
