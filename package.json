@@ -86,7 +86,7 @@
     "@microsoft/api-extractor": "7.53.3",
     "@stylistic/eslint-plugin": "5.5.0",
     "@types/debug": "4.1.12",
-    "@types/node": "24.9.2",
+    "@types/node": "24.10.0",
     "@types/slug": "5.0.9",
     "@types/yargs": "17.0.34",
     "eslint": "9.38.0",
