@@ -94,7 +94,7 @@
     "eslint-plugin-perfectionist": "4.15.1",
     "globals": "16.5.0",
     "husky": "9.1.7",
-    "knip": "5.68.0",
+    "knip": "5.69.0",
     "lint-staged": "16.2.6",
     "marked-man": "2.1.0",
     "prettier": "3.6.2",
