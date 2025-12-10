@@ -98,7 +98,7 @@
     "lint-staged": "16.2.7",
     "marked-man": "2.1.0",
     "prettier": "3.7.4",
-    "prettier-plugin-jsdoc": "1.7.0",
+    "prettier-plugin-jsdoc": "1.8.0",
     "prettier-plugin-pkg": "0.21.2",
     "tsup": "8.5.1",
     "tsx": "4.21.0",
